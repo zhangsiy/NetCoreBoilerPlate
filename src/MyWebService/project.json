@@ -22,9 +22,9 @@
     "NLog.Extensions.Logging": "1.0.0-rtm-alpha4",
     "NLog": "5.0.0-beta03",
     "Swashbuckle": "6.0.0-beta902",
-    "System.Data.Common": "4.1.0",
-    "System.Data.SqlClient": "4.1.0",
-    "System.Runtime": "4.1.0"
+    "System.Data.Common": "4.3.0",
+    "System.Data.SqlClient": "4.3.0",
+    "System.Runtime": "4.3.0"
   },
 
   "tools": {

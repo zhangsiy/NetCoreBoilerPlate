@@ -271,3 +271,6 @@ ivy-lib
 
 # Consolidated Output
 /output/
+
+# project.json lock file
+project.lock.json
