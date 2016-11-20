@@ -1,0 +1,15 @@
+{
+    "manifestVersion": 1,
+    "deployments": {
+        "aspNetCoreWeb": [
+			{
+				"name": "[TO_FILL Application Name. e.g. 'my-web-app']",
+				"parameters": {
+					"appBundle": "site.zip",
+					"iisPath": "/",
+					"iisWebSite": "Default Web Site"
+				}
+			}
+        ]
+    }
+}
