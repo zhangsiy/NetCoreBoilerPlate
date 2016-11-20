@@ -1,7 +1,7 @@
 {
+  "version": "1.0.0-*",
   "dependencies": {
     "AutoMapper": "5.1.1",
-    "Elasticsearch.Net.Aws": "2.1.3",
     "Microsoft.ApplicationInsights.AspNetCore": "1.0.0",
     "Microsoft.AspNetCore.Diagnostics": "1.0.0",
     "Microsoft.AspNetCore.Mvc": "1.0.1",
@@ -19,10 +19,8 @@
     "Microsoft.Extensions.Logging.Console": "1.0.0",
     "Microsoft.Extensions.Logging.Debug": "1.0.0",
     "Microsoft.Extensions.Options.ConfigurationExtensions": "1.0.0",
-    "Microsoft.VisualStudio.Web.BrowserLink.Loader": "14.0.0",
-    "NEST": "2.4.6",
-    "NLog": "4.3.9",
     "NLog.Extensions.Logging": "1.0.0-rtm-alpha4",
+    "NLog": "5.0.0-beta03",
     "Swashbuckle": "6.0.0-beta902",
     "System.Data.Common": "4.1.0",
     "System.Data.SqlClient": "4.1.0",
@@ -36,11 +34,19 @@
   },
 
   "frameworks": {
-    "net452": {
+    "netcoreapp1.1": {
+      "dependencies": {
+        "Microsoft.NETCore.App": {
+          "type": "platform",
+          "version": "1.1.0"
+        }
+      },
+      "imports": "dnxcore50"
     }
   },
 
   "buildOptions": {
+    "debugType": "portable",
     "emitEntryPoint": true,
     "preserveCompilationContext": true,
     "xmlDoc": true
