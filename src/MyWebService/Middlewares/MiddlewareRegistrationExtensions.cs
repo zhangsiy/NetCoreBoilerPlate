@@ -24,7 +24,7 @@ namespace MyWebService.Middlewares
         /// <returns>The resultant application builder object for fluent calls</returns>
         public static IApplicationBuilder UseCorrelationId(this IApplicationBuilder builder)
         {
-            return builder.UseMiddleware<CorrelationIdAttachMiddelware>();
+            return builder.UseMiddleware<CorrelationIdAttachMiddleware>();
         }
     }
 }

@@ -1,0 +1,25 @@
+{
+  "name": "my-web-service",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "child-process-promise": "^2.2.1",
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-decompress": "^2.0.1",
+    "gulp-dotnet-cli": "^0.1.0",
+    "gulp-download": "0.0.1",
+    "lodash": "^4.17.4",
+    "mkpath": "^1.0.0",
+    "request": "^2.81.0",
+    "yargs": "^7.1.0",
+    "gulp-json-editor": "^2.2.1",
+    "newman": "^3.6.0"
+  }
+}

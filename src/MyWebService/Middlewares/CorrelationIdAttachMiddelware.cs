@@ -32,7 +32,7 @@ namespace MyWebService.Middlewares
         {
             // Setup correslation ID in the context
             var correlationId = GetCorrelationId(context);
-            // MappedDiagnosticsLogicalContext.Set("correlationId", correlationId);
+            MappedDiagnosticsLogicalContext.Set("correlationId", correlationId);
 
             // Attach the correlation ID to reponse header
             context.Response.Headers[CorrelationIdHeaderKey] = correlationId;

@@ -9,7 +9,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.PlatformAbstractions;
 using NLog.Extensions.Logging;
-using Swashbuckle.Swagger.Model;
+using NLog.Web;
+using Swashbuckle.AspNetCore.Swagger;
 
 namespace MyWebService
 {
@@ -19,7 +20,7 @@ namespace MyWebService
         {
             var builder = new ConfigurationBuilder()
                 .SetBasePath(env.ContentRootPath)
-                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env.EnvironmentName}.json", optional: true)
                 .AddEnvironmentVariables();
 
@@ -28,6 +29,9 @@ namespace MyWebService
                 // This will push telemetry data through Application Insights pipeline faster, allowing you to view results immediately.
                 builder.AddApplicationInsightsSettings(developerMode: true);
             }
+
+            env.ConfigureNLog("nlog.config");
+
             Configuration = builder.Build();
         }
 
@@ -62,15 +66,13 @@ namespace MyWebService
             });
 
             // Swagger
-            services.AddSwaggerGen();
-            services.ConfigureSwaggerGen(options =>
+            services.AddSwaggerGen(options =>
             {
-                // [TO_FILL application information for swagger]
-                options.SingleApiVersion(new Info
+                options.SwaggerDoc("v1", new Info
                 {
+                    Title = "Matching Product Attribute Service",
                     Version = "v1",
-                    Title = "My Test API",
-                    Description = "The Web API for testing the awesome Asp.Net Core boiler plate",
+                    Description = "Data API that accesses product attributes configured for Matching domain",
                     TermsOfService = "None"
                 });
                 options.IncludeXmlComments(GetXmlCommentsPath(PlatformServices.Default.Application));
@@ -93,6 +95,7 @@ namespace MyWebService
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                app.UseBrowserLink();
             }
             else
             {
@@ -112,11 +115,16 @@ namespace MyWebService
 
             // Swagger
             app.UseSwagger();
-            app.UseSwaggerUi();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Matching Product Attribute Service");
+            });
 
             // Add NLog
+            //add NLog to ASP.NET Core
             loggerFactory.AddNLog();
-            env.ConfigureNLog("nlog.config");
+            //add NLog.Web
+            app.AddNLogWeb();
         }
 
         private string GetXmlCommentsPath(ApplicationEnvironment appEnvironment)
