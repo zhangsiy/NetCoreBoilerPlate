@@ -272,3 +272,12 @@ ivy-lib
 
 # project.json lock file
 project.lock.json
+
+output
+node_modules
+.terraform
+terraform.exe
+*.tfstate*
+secrets/
+Zanzifile.resolved
+package-lock.json

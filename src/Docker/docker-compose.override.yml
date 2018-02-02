@@ -1,0 +1,8 @@
+version: '3'
+
+services:
+  <TO_FILL | SERVICE_NAME_LOWER_CASE>:
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+    ports:
+      - "80"

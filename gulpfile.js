@@ -1,57 +1,75 @@
-//##########################################
-// TODO:
-//   * Real environment from git branch
-//   * Real version
-//   * Real storage for AWS secrets
-//   * Real tag/repo handling for build images
-//##########################################
-
+// Dependencies
 const {restore, test, build, publish, run} = require('gulp-dotnet-cli');
-const gulp = require('gulp');
-const del = require('del');
-const path = require('path');
-const spawn = require('child-process-promise').spawn;
 const argv = require('yargs').argv;
+const download = require('gulp-download');
+const decompress = require('gulp-decompress');
+const path = require('path');
+const mkpath = require('mkpath');
+const gulp = require('gulp');
+const http = require('http');
+const fs = require('fs');
+const del = require('del');
+const cp = require('child_process');
+const os = require('os');
+const request = require('request');
+const spawn = require('child-process-promise').spawn;
+const exec = require('child-process-promise').exec;
 
+// Context data
+const branch = argv.environment || process.env.BRANCH_NAME || "unknown"; // your current git branch, you can override the current branch with the OVERRIDE_BRANCH env, or it will come from jenkins, finally it will just default to BRANCHUNKNOWN
+//the environment we run in, calculated off the branch. You can replace this with your own strings, we will get the branch from jenkins.
+//my kingdom for a regex, just replace some common characters that are bad in aws, and shorten release and feature
+const environment = branch.replace('/', '-').replace('\\', '-').replace('origin-', '').replace('feature', 'ft').replace('release', 'rel');
+
+// Dotnet context
 const configuration = 'Release';
-const version = '1.1.1';
-const publishOutputDir = path.join(process.cwd(), 'output', 'publishOutput');
+const version = '1.0.0';
 const sourceDir = path.join(process.cwd(), 'src');
 const outputDir = path.join(process.cwd(), 'output');
+const publishOutputDir = path.join(outputDir, 'publishOutput');
 
-const dockerFileDir = path.join(process.cwd(), 'docker');
-const buildDockerFilePath = path.join(dockerFileDir, 'build', 'Dockerfile');
-const bundleDockerFilePath = path.join(dockerFileDir, 'bundle', 'Dockerfile');
+// Terraform context
+const terraformExe = 'terraform' + (os.platform() === 'win32' ? '.exe': ''); //executables in windows have an extension, unix exe's do not follow the same convention.
+const terraformDir = path.join(__dirname, 'terraform');
+const terraformPath = path.join(terraformDir, terraformExe);
+const terraformVersion = '0.9.3';
 
-const environment = 'local';
+//=============================USER CONFIGURATION, PLEASE FILL OUT ========================================================
+//your aws region, default to us-east-1
+const region = argv.region || 'us-east-1';
+const app = 'NetCoreSample'; //your app's name, used to generate names for infrastructures
+
+const terraformStateS3Bucket = '<TO_FILL | DOMAIN_NAME>-terraform-bucket'; // the s3 bucket where we will store our terraform files
+const terraformAwsProfile = '<TO_FILL | DOMAIN_NAME>-terraform';
+
+const mainProjectName = 'NetCoreSample.Service'; // The name of the main/entry project.
+
+const containerRegistryUri = "<TO_FILL | ECR_URI>"; // URI to locate the container image registry
+//=============================END USER CONFIGURATION ====================================================================
+
+// Docker context
 const dockerEnvironment = argv.dockerenv || environment;
 const dockerTag = argv.dockertag || `${dockerEnvironment}-${version}`;
-
-const containerPort = argv.containerport || '5000';
-const hostPort = argv.hostport || '8005';
-
-// ========================= User Variables (Fill this out!) ======================================
-const mainProjectName = 'MyWebService';
-const registryUri = 'mywebservice'; // Replace this with real ECR URI
-// ================================================================================================
+const dockerDir = path.join(sourceDir, 'Docker');
+const dockerFilePath = path.join(sourceDir, mainProjectName, 'Dockerfile');
 
 const entryAssemblyName = `${mainProjectName}.dll`;
-const buildImageTag = `build:${dockerTag}`;
-const bundleImageTag = `${registryUri}:${dockerTag}`;
+const dockerImageTag = `${containerRegistryUri}:${dockerTag}`;
 
-// ========================= Task Definitions ======================================
 
-// --------------------------- Common Development Tasks -----------------------------------
+// ======================== 
+// == Begin: Dot Net
+// ========================
 
 gulp.task('clean', () => del(['**/bin', '**/obj', 'output/*']));
 
 gulp.task('restore', ['clean'], () => 
-	gulp.src('./src/*.sln')
+	gulp.src('${sourceDir}/*.sln')
 		.pipe(restore())
 );
 
 gulp.task('build', ['restore'], () => 
-	gulp.src('./src/*.sln')
+	gulp.src('${sourceDir}/*.sln')
 		.pipe(build(
 			{
 				configuration: configuration,
@@ -61,7 +79,7 @@ gulp.task('build', ['restore'], () =>
 );
 
 gulp.task('test', ['build'], () =>
-	gulp.src('src/**/*Tests'.csproj)
+	gulp.src('${sourceDir}/**/*Tests.csproj')
 		.pipe(test(
 			{
 				configuration: configuration,
@@ -71,7 +89,7 @@ gulp.task('test', ['build'], () =>
 );
 
 gulp.task('publish', ['build'], () =>
-	gulp.src(`./src/${mainProjectName}`)
+	gulp.src(`${sourceDir}/${mainProjectName}`)
 		.pipe(publish(
 			{
 				configuration: configuration,
@@ -97,27 +115,105 @@ gulp.task('run', [], () => {
 
 gulp.task('preflight', ['publish']);
 
+// ======================== 
+// == End: Dot Net
+// ========================
 
-// --------------------------- Docker Tasks -----------------------------------
 
-gulp.task('docker:compile-build-image', [], () =>
-	spawn('docker', ['build', '-t', buildImageTag, '-f', buildDockerFilePath, '.'], {stdio:'inherit'})
-	.then(() => spawn('docker', ['image', 'prune', '-f'], {stdio:'inherit'}))
+// ======================== 
+// == Begin: Docker
+// ========================
+
+gulp.task('docker:compile', ()=> 
+    spawn('docker', ['build', '-t', dockerImageTag, '-f', dockerFilePath, sourceDir], {stdio:'inherit'})
 );
 
-gulp.task('docker:build-app', ['docker:compile-build-image'], () => 
-	spawn('docker', ['run', '-it', '--rm', '-v', `${sourceDir}:/app/src`, '-v', `${outputDir}:/app/output`, buildImageTag, 'gulp', 'publish'], {stdio:'inherit'})
+gulp.task('docker:login', ()=>
+    exec(`aws ecr --profile ${terraformAwsProfile} get-login --no-include-email --region ${region} `)
+    .then((result)=>exec(result.stdout))
+    
+);
+gulp.task('docker:push', ['docker:login', 'docker:compile'], ()=>
+    spawn("docker", ["push", dockerImageTag], {stdio: 'inherit'})
+    .then(()=>spawn('docker', ['rmi', dockerImageTag], {stdio:'inherit'}))
 );
 
-gulp.task('docker:compile-bundle-image', ['docker:build-app'], () =>
-	spawn('docker', ['build', '-t', bundleImageTag, '-f', bundleDockerFilePath, '--build-arg', `entryassembly=${entryAssemblyName}`, '--build-arg', 'artifactdir=./output/publishOutput', '--build-arg', `containerport=${containerPort}`, '.'], {stdio:'inherit'})
-	.then(() => spawn('docker', ['image', 'prune', '-f'], {stdio:'inherit'}))
+// ======================== 
+// == End: Docker
+// ========================
+
+
+// ======================== 
+// == Begin: Terraform
+// ========================
+
+gulp.task('terraform:download', ()=>{
+    if(fs.existsSync(terraformPath)){
+        return;
+    } 
+    var mappedOS;
+    var arch = os.arch();
+    var mappedArch;
+    if(arch === 'ia32' || arch === 'x32' || arch === 'x86'){
+        mappedArch = '386'
+    }
+    if(arch === 'x64'){
+        mappedArch = 'amd64'
+    }
+    if(arch === 'arm'){
+        mappedArch = 'arm'
+    }
+    if(process.platform == 'win32'){
+        mappedOS = `windows`
+    }
+    if(process.platform === 'linux'){
+        mappedOS = `linux`
+    }
+    // darwin === macos
+    if(process.platform === 'darwin'){
+        mappedOS = `darwin`
+    }
+    var url = `https://releases.hashicorp.com/terraform/${terraformVersion}/terraform_${terraformVersion}_${mappedOS}_${mappedArch}.zip`
+    return download(url).pipe(decompress()).pipe(gulp.dest(terraformDir));
+
+});
+
+/* terraform tasks */
+gulp.task('terraform:clean', ()=>del([path.join(terraformDir, '.terraform' )], {force: true}));
+gulp.task('terraform:init', ['terraform:clean', 'terraform:download'], (cb)=>{
+  exec(`${terraformPath} init -backend-config="bucket=${terraformStateS3Bucket}" -backend-config="key=${app}/${environment}/state.tf" -backend-config="region=${region}"`, {cwd:terraformDir})
+  .then(a=>{
+      console.log(a.stdout);
+      console.log(a.stderr);
+      cb();
+  })
+  .catch(a=>{
+      console.log(a);
+      cb(a);
+    })
+}
 );
 
-gulp.task('docker:run-app', ['docker:compile-bundle-image'], () =>
-	spawn('docker', ['run', '-it', '--rm', '-p', `${hostPort}:${containerPort}`, bundleImageTag], {stdio:'inherit'})
+gulp.task('terraform:destroy', ['terraform:init'], ()=>
+    spawn(terraformPath, ['destroy', '-force', 
+		'-var', `environment=${environment}`,
+    ], {stdio:'inherit', cwd:terraformDir})
 );
 
-gulp.task('docker:clear-images', () => 
-	spawn('docker', ['image', 'prune', '-f'], {stdio:'inherit'})
+gulp.task('terraform:plan', ['terraform:init'], ()=>
+    spawn(terraformPath, ['get', '-update'], {stdio:'inherit', cwd:terraformDir})
+    .then(a=>spawn(terraformPath,  ['plan',
+		'-var', `environment=${environment}`,
+  ], {stdio:'inherit', cwd:terraformDir}))
+    
 );
+
+gulp.task('terraform:apply',['terraform:plan', 'terraform:init'], () =>
+  spawn(terraformPath, ['apply', 
+	'-var', `environment=${environment}`,
+  ], {stdio:'inherit', cwd:terraformDir})
+);
+
+// ======================== 
+// == End: Terraform
+// ========================
