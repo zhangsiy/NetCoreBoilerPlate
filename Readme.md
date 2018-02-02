@@ -1,6 +1,4 @@
-##########################
-## Environment Setup
-##########################
+### Environment Setup
 
 * Install NetCore 2
 * Upgrade VisualStudio 2017
@@ -9,9 +7,7 @@
 * npm install -g gulp
 
 
-##########################
-## Project Setup
-##########################
+### Project Setup
 
 * Rename below files to have your project name
   * Solution file "NetCoreSample.sln" to <PROJECT_NAME>.sln
@@ -25,9 +21,7 @@
   * Replace all "<TO_FILL | AWS_REGION>" occurances with your AWS region
 
 
-##########################
-## AWS Setup
-##########################
+### AWS Setup
 
 * Create terraform IAM user, "<TO_FILL | DOMAIN_NAME>-terraform" and attach admin right
 * Setup a S3 bucket to hold remote states for Terraform. Name it "<TO_FILL | DOMAIN_NAME>-terraform-bucket"
@@ -36,13 +30,15 @@
   * "aws configure --profile <TO_FILL | DOMAIN_NAME>-terraform"
 
 
-##########################
-## Infrastructure Setup
-##########################
+### Infrastructure Setup
 
 * npm install
 * Deploy infrastructure via Terraform
   * gulp terraform:apply
 * Go to AWS console, and copy the resultant ECR URI into the gulp file
   * Location is marked with "<TO_FILL | ECR_URI>"
+
+
+### Your First Docker 
+
 * gulp docker:push to compile, preflight the project and build and push the docker image to ECR
