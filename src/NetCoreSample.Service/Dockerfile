@@ -4,10 +4,8 @@ EXPOSE 80
 
 FROM microsoft/aspnetcore-build:2.0 AS build
 WORKDIR /src
-COPY *.sln ./
-COPY NetCoreSample.Service/NetCoreSample.Service.csproj NetCoreSample.Service/
-RUN dotnet restore
 COPY . .
+RUN dotnet restore
 WORKDIR /src/NetCoreSample.Service
 RUN dotnet build -c Release -o /app
 

@@ -1,11 +1,14 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.27130.2026
+VisualStudioVersion = 15.0.27130.2010
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NetCoreSample.Service", "NetCoreSample.Service\NetCoreSample.Service.csproj", "{55669A9C-B250-4239-9CF2-CF0FB18F70FF}"
 EndProject
 Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "Docker\docker-compose.dcproj", "{E07F757F-3391-4174-9076-1D741CEBE361}"
+	ProjectSection(ProjectDependencies) = postProject
+		{55669A9C-B250-4239-9CF2-CF0FB18F70FF} = {55669A9C-B250-4239-9CF2-CF0FB18F70FF}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
