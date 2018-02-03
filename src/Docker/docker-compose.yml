@@ -1,7 +1,7 @@
 version: '3'
 
 services:
-  <TO_FILL | SERVICE_NAME_LOWER_CASE>:
+  netcoresample.service:
     image: netcoresample.service
     build:
       context: ../
