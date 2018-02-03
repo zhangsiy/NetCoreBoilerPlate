@@ -1,28 +1,26 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using System.Reflection;
+using NetCoreSample.Models.HealthCheck;
 
-namespace NetCoreSample.Service.Controllers
+namespace NetCoreSample.Controllers
 {
     /// <summary>
-    /// End point to allow external pings to detect the up status of the service
-    /// A common use case being 
+    /// A end point to allow external pings to detect the up status of the service
     /// </summary>
     [Route("/[controller]")]
     public class LiveCheckController : Controller
     {
-        // GET: api/<controller>
+        /// <summary>
+        /// Ping to get a live check response
+        /// </summary>
+        /// <returns></returns>
         [HttpGet]
         public async Task<object> Get()
         {
-            return Json(new
-            {
-                Message = "The service is live!",
-                Version = Assembly.GetEntryAssembly().GetName().Version.ToString(4)
-            });
+            return await new LiveCheckBuilder()
+                .RegisterSelfCheck()
+                .Run();
         }
+
     }
 }
