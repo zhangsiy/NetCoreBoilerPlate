@@ -1,7 +1,10 @@
 ﻿using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using NetCoreSample.Filters;
+using NetCoreSample.Middlewares;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace NetCoreSample.Service
@@ -18,7 +21,27 @@ namespace NetCoreSample.Service
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddMvc();
+            services.AddMvc(options =>
+            {
+                // Default profile to cache things for 1 hour
+                options.CacheProfiles.Add("Default",
+                    new CacheProfile()
+                    {
+                        Duration = 3600,
+                        Location = ResponseCacheLocation.Any
+                    });
+
+                // Use this profile to get "no-cache" behavior
+                options.CacheProfiles.Add("Never",
+                    new CacheProfile()
+                    {
+                        Location = ResponseCacheLocation.None,
+                        NoStore = true
+                    });
+
+                // Register global exception handling
+                options.Filters.Add(typeof(ExceptionLoggingFilter));
+            });
 
             services.AddSwaggerGen(c =>
             {
@@ -29,6 +52,10 @@ namespace NetCoreSample.Service
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            // Register custom middlewars
+            app.UseCorrelationId();
+            app.UseRequestLogger();
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();

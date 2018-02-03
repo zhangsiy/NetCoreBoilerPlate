@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Filters;
-using NLog;
+using Serilog;
 
 namespace NetCoreSample.Filters
 {
@@ -8,8 +8,6 @@ namespace NetCoreSample.Filters
     /// </summary>
     public class ExceptionLoggingFilter : ExceptionFilterAttribute
     {
-        private readonly Logger _logger = LogManager.GetCurrentClassLogger();
-
         /// <summary>
         /// 
         /// </summary>
@@ -17,7 +15,7 @@ namespace NetCoreSample.Filters
         public override void OnException(ExceptionContext context)
         {
             // Log the exception
-            _logger.Error(context.Exception.ToString());
+            Log.Error(context.Exception.ToString());
 
             // Hand over the control to base
             base.OnException(context);

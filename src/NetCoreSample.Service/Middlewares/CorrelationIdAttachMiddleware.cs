@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-using NLog;
+using Serilog.Context;
 
 namespace NetCoreSample.Middlewares
 {
@@ -32,12 +32,14 @@ namespace NetCoreSample.Middlewares
         {
             // Setup correslation ID in the context
             var correlationId = GetCorrelationId(context);
-            MappedDiagnosticsLogicalContext.Set("correlationId", correlationId);
 
-            // Attach the correlation ID to response header
-            context.Response.Headers[CorrelationIdHeaderKey] = correlationId;
+            using (LogContext.PushProperty("CorrelationId", correlationId))
+            {
+                // Attach the correlation ID to response header
+                context.Response.Headers[CorrelationIdHeaderKey] = correlationId;
 
-            await _next.Invoke(context);
+                await _next.Invoke(context);
+            }
         }
 
         /// <summary>

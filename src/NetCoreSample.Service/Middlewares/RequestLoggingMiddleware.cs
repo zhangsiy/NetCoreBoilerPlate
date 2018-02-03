@@ -3,7 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
-using NLog;
+using Serilog;
 
 namespace NetCoreSample.Middlewares
 {
@@ -13,7 +13,6 @@ namespace NetCoreSample.Middlewares
     public class RequestLoggingMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly Logger _logger;
 
         /// <summary>
         /// Constructor
@@ -22,7 +21,6 @@ namespace NetCoreSample.Middlewares
         public RequestLoggingMiddleware(RequestDelegate next)
         {
             _next = next;
-            _logger = LogManager.GetCurrentClassLogger();
         }
 
         /// <summary>
@@ -47,11 +45,11 @@ namespace NetCoreSample.Middlewares
         {
             // First log basic request info
             var requestInfo = GetRequestBasicInfo(request);
-            _logger.Info("Start handling request: {0}", requestInfo);
+            Log.Information("Start handling request: {0}", requestInfo);
 
             // Then log details about the request
             var requestDetails = GetRequestDetailsInfo(request);
-            _logger.Debug("[Request Details][{0}]", requestDetails);
+            Log.Debug("[Request Details][{0}]", requestDetails);
 
             // Then log request body
             // Note the original request body stream is write only, so use the below logic
@@ -61,7 +59,7 @@ namespace NetCoreSample.Middlewares
                 string body = await bodyReader.ReadToEndAsync();
 
                 request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
-                _logger.Debug("[Request Body][{0}]", body);
+                Log.Debug("[Request Body][{0}]", body);
             }
         }
 
@@ -69,11 +67,11 @@ namespace NetCoreSample.Middlewares
         {
             // Log basic request info
             var requestInfo = GetRequestBasicInfo(response.HttpContext.Request);
-            _logger.Info("Finished handling request: {0}", requestInfo);
+            Log.Information("Finished handling request: {0}", requestInfo);
 
             // Then log details about the response
             var responseDetails = GetResponseDetailsInfo(response);
-            _logger.Debug("[Response Details][{0}]", responseDetails);
+            Log.Debug("[Response Details][{0}]", responseDetails);
 
             // We don't log response body for now as that produces too much noise and 
             // is not expected to be as helpful for request debugging
