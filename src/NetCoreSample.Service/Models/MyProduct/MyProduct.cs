@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace NetCoreSample.Models.MyProduct
+namespace NetCoreSample.Service.Models.MyProduct
 {
     public class MyProduct
     {

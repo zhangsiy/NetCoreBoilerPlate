@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace NetCoreSample.Controllers.Api.Common
+namespace NetCoreSample.Service.Controllers.Api.Common
 {
     /// <summary>
     /// A builder to construct ETags

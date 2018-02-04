@@ -2,7 +2,7 @@
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace NetCoreSample.Models.HealthCheck
+namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
     /// A check item class holds logic for checking an (external) web service

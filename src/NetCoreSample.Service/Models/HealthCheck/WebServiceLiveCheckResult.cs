@@ -1,6 +1,6 @@
 ﻿using System.Net;
 
-namespace NetCoreSample.Models.HealthCheck
+namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
     /// DTO to hold check result of (external) web service

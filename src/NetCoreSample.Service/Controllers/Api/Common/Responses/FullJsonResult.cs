@@ -1,9 +1,9 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using NetCoreSample.Controllers.Api.Common.Responses;
+using NetCoreSample.Service.Controllers.Api.Common.Responses;
 
-namespace NetCoreSample.Controllers.Api.Common.ResponseBuilder
+namespace NetCoreSample.Service.Controllers.Api.Common.ResponseBuilder
 {
     /// <summary>
     /// ActionResult to represent Json-coded 200 OK

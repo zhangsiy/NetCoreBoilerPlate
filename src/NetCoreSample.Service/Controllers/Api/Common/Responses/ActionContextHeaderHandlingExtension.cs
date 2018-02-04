@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 
-namespace NetCoreSample.Controllers.Api.Common.Responses
+namespace NetCoreSample.Service.Controllers.Api.Common.Responses
 {
     /// <summary>
     /// Extension utility class to attach additional response headers to the ActionContext,

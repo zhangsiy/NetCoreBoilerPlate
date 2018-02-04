@@ -1,4 +1,4 @@
-﻿namespace NetCoreSample.Models.HealthCheck
+﻿namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
     /// DTO to hold Database live check result

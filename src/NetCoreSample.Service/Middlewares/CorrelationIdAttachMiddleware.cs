@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Serilog.Context;
 
-namespace NetCoreSample.Middlewares
+namespace NetCoreSample.Service.Middlewares
 {
     /// <summary>
     /// Middleware to ensure correlation ID set in context for every request scope

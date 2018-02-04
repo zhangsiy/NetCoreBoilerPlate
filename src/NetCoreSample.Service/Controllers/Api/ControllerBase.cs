@@ -1,10 +1,10 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NetCoreSample.Controllers.Api.Common.Requests;
-using NetCoreSample.Controllers.Api.Common.ResponseBuilder;
-using NetCoreSample.Controllers.Api.Common.Responses;
+using NetCoreSample.Service.Controllers.Api.Common.Requests;
+using NetCoreSample.Service.Controllers.Api.Common.ResponseBuilder;
+using NetCoreSample.Service.Controllers.Api.Common.Responses;
 
-namespace NetCoreSample.Controllers.Api
+namespace NetCoreSample.Service.Controllers.Api
 {
     /// <summary>
     /// A base for all controllers. 

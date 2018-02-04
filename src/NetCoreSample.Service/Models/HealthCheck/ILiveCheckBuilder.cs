@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace NetCoreSample.Models.HealthCheck
+namespace NetCoreSample.Service.Models.HealthCheck
 { 
     /// <summary>
     /// A builder to build and run live/connection check on various 

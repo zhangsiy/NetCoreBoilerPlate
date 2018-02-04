@@ -3,8 +3,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using NetCoreSample.Filters;
-using NetCoreSample.Middlewares;
+using NetCoreSample.Service.Middlewares;
 using Serilog;
 using Swashbuckle.AspNetCore.Swagger;
 
@@ -49,9 +48,6 @@ namespace NetCoreSample.Service
                         Location = ResponseCacheLocation.None,
                         NoStore = true
                     });
-
-                // Register global exception handling
-                options.Filters.Add(typeof(ExceptionLoggingFilter));
             });
 
             services.AddSwaggerGen(c =>

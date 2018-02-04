@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Threading.Tasks;
 
-namespace NetCoreSample.Models.HealthCheck
+namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
     /// A check item class holds logic for checking the running service itself

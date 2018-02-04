@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace NetCoreSample.Controllers.Api.Common.Responses
+namespace NetCoreSample.Service.Controllers.Api.Common.Responses
 {
     /// <summary>
     /// ActionResult to represent 409 Conflict

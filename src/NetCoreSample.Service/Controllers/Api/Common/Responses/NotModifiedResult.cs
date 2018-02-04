@@ -3,7 +3,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
-namespace NetCoreSample.Controllers.Api.Common.Responses
+namespace NetCoreSample.Service.Controllers.Api.Common.Responses
 {
     /// <summary>
     /// ActionResult to represent 304 Not Modified

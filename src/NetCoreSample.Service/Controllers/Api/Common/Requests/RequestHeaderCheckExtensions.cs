@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Net.Http.Headers;
 
-namespace NetCoreSample.Controllers.Api.Common.Requests
+namespace NetCoreSample.Service.Controllers.Api.Common.Requests
 {
     /// <summary>
     /// Extensions to HttpRequest to help performing all types of server side

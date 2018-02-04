@@ -1,9 +1,9 @@
 ﻿using System;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NetCoreSample.Controllers.Api.Common.Responses;
+using NetCoreSample.Service.Controllers.Api.Common.Responses;
 
-namespace NetCoreSample.Controllers.Api.Common.Requests
+namespace NetCoreSample.Service.Controllers.Api.Common.Requests
 {
     /// <summary>
     /// Builder to build check for pre-conditions of a request.

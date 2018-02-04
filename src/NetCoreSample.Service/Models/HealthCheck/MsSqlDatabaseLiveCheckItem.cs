@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Data.SqlClient;
 
-namespace NetCoreSample.Models.HealthCheck
+namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
     /// A check item class holds logic for checking a SqlServer connection

@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using System.Linq;
 
-namespace NetCoreSample.Models.HealthCheck
+namespace NetCoreSample.Service.Models.HealthCheck
 {
     internal class LiveCheckBuilder : ILiveCheckBuilder
     {

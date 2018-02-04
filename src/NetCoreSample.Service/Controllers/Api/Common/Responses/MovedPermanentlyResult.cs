@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace NetCoreSample.Controllers.Api.Common.Responses
+namespace NetCoreSample.Service.Controllers.Api.Common.Responses
 {
     /// <summary>
     /// ActionResult to represent 301 Moved Permanently

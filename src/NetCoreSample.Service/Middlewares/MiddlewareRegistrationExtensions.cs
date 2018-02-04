@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Builder;
 
-namespace NetCoreSample.Middlewares
+namespace NetCoreSample.Service.Middlewares
 {
     /// <summary>
     /// Extension to register request logger to the application

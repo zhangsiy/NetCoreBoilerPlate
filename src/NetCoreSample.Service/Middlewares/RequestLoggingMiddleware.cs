@@ -1,106 +1,129 @@
-﻿using System.IO;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Newtonsoft.Json;
+﻿using Microsoft.AspNetCore.Http;
 using Serilog;
+using Serilog.Events;
+using System;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace NetCoreSample.Middlewares
+namespace NetCoreSample.Service.Middlewares
 {
     /// <summary>
-    /// A middleware to log all requests
+    /// A middleware aimed at global level logging of service requests, and responses where 
+    /// appropriate.
+    /// This also handles the global level logging of exceptions occurred anywhere within the
+    /// pipeline.
+    /// Note: This is a revised version from the code copied from the reference below.
+    /// 
+    /// Reference: https://blog.getseq.net/smart-logging-middleware-for-asp-net-core/
     /// </summary>
     public class RequestLoggingMiddleware
     {
-        private readonly RequestDelegate _next;
-
         /// <summary>
-        /// Constructor
+        /// Default request logging message template
         /// </summary>
-        /// <param name="next">The handle for the next link in the pipeline</param>
+        const string MessageTemplate =
+            "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+
+        static readonly ILogger Log = Serilog.Log.ForContext<RequestLoggingMiddleware>();
+
+        readonly RequestDelegate _next;
+
         public RequestLoggingMiddleware(RequestDelegate next)
         {
+            if (next == null) throw new ArgumentNullException(nameof(next));
             _next = next;
         }
 
-        /// <summary>
-        /// The default required method for middlewares, entry point for the logic 
-        /// of the middleware.
-        /// </summary>
-        /// <param name="context">HTTP Context</param>
-        /// <returns>Task facilitating the async operation</returns>
-        public async Task Invoke(HttpContext context)
+        public async Task Invoke(HttpContext httpContext)
         {
-            // Log request
-            await LogRequest(context.Request);
+            if (httpContext == null) throw new ArgumentNullException(nameof(httpContext));
 
-            // Invoke the pipeline downstream
-            await _next.Invoke(context);
-
-            // Log response
-            await LogResponse(context.Response);
-        }
-
-        private async Task LogRequest(HttpRequest request)
-        {
-            // First log basic request info
-            var requestInfo = GetRequestBasicInfo(request);
-            Log.Information("Start handling request: {0}", requestInfo);
-
-            // Then log details about the request
-            var requestDetails = GetRequestDetailsInfo(request);
-            Log.Debug("[Request Details][{0}]", requestDetails);
-
-            // Then log request body
-            // Note the original request body stream is write only, so use the below logic
-            // to swap out a read/write memory stream with rewinding.
-            using (var bodyReader = new StreamReader(request.Body))
+            var sw = Stopwatch.StartNew();
+            try
             {
-                string body = await bodyReader.ReadToEndAsync();
+                await _next.Invoke(httpContext);
+                sw.Stop();
 
-                request.Body = new MemoryStream(Encoding.UTF8.GetBytes(body));
-                Log.Debug("[Request Body][{0}]", body);
+                // For now, assume it is expected to provide verbose logging for any HTTP 5XX 
+                // responses. 
+                // Implementers should decide whether this behavior should be changed based on
+                // specific use cases. 
+                // E.g. whether 4XX should log verbose context as well. 
+                var statusCode = httpContext.Response?.StatusCode;
+                var level = statusCode >= 500 ? LogEventLevel.Error : LogEventLevel.Information;
+
+                var log = level >= LogEventLevel.Error ? GetLoggerWithVerboseRequestContext(httpContext) : Log;
+                log.Write(level, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, statusCode, sw.Elapsed.TotalMilliseconds);
             }
+            // Never caught, because `LogException()` returns false.
+            catch (Exception ex) when (LogException(httpContext, sw, ex)) { }
         }
 
-        private async Task LogResponse(HttpResponse response)
+        /// <summary>
+        /// Log an exception originated from handling the given web request context.
+        /// </summary>
+        private static bool LogException(HttpContext httpContext, Stopwatch sw, Exception ex)
         {
-            // Log basic request info
-            var requestInfo = GetRequestBasicInfo(response.HttpContext.Request);
-            Log.Information("Finished handling request: {0}", requestInfo);
+            sw.Stop();
 
-            // Then log details about the response
-            var responseDetails = GetResponseDetailsInfo(response);
-            Log.Debug("[Response Details][{0}]", responseDetails);
+            GetLoggerWithVerboseRequestContext(httpContext)
+                .Error(ex, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, 500, sw.Elapsed.TotalMilliseconds);
 
-            // We don't log response body for now as that produces too much noise and 
-            // is not expected to be as helpful for request debugging
+            return false;
         }
 
-        private static string GetRequestBasicInfo(HttpRequest request)
+        /// <summary>
+        /// Get a (Serilog) logger instance with verbose web request context data attached
+        /// </summary>
+        private static ILogger GetLoggerWithVerboseRequestContext(HttpContext httpContext)
         {
-            return string.Format("{0} {1}", request.Method, request.Path);
+            var requestContext = GetRequestContext(httpContext);
+            return Log.ForContext("RequestContext", requestContext, true);
         }
 
-        private static string GetRequestDetailsInfo(HttpRequest request)
+        /// <summary>
+        /// Construct a structure of data that represent verbose information
+        /// from the request context.
+        /// </summary>
+        private static dynamic GetRequestContext(HttpContext httpContext)
         {
-            return string.Format("Client IP: {0}, Path: {1}, Content Type: {2}, Content Length: {3}, Headers: {4}",
-                request.HttpContext.Connection.RemoteIpAddress,
-                request.Path,
-                request.ContentType,
-                request.ContentLength,
-                JsonConvert.SerializeObject(request.Headers)
-            );
+            var request = httpContext.Request;
+
+            var result = new
+            {
+                RequestHeader = request.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
+                RequestHost = request.Host,
+                RequestRemoteIp = httpContext.Connection.RemoteIpAddress,
+                RequestProtocol = request.Protocol,
+                RequestContentType = request.ContentType,
+                RequestContentLength = request.ContentLength,
+                RequestQueryString = request.QueryString,
+                RequestForm = request.HasFormContentType 
+                            ? request.Form.ToDictionary(v => v.Key, v => v.Value.ToString())
+                            : null
+            };
+
+            return result;
         }
 
-        private static string GetResponseDetailsInfo(HttpResponse response)
+        /// <summary>
+        /// Construct a structure of data that represent verbose information
+        /// from the request context.
+        /// </summary>
+        private static dynamic GetResponseContext(HttpContext httpContext)
         {
-            return string.Format("Status Code: {0}, Content Type: {1}, Content Length: {2}, Headers: {3}",
-                response.StatusCode,
-                response.ContentType,
-                response.ContentLength,
-                JsonConvert.SerializeObject(response.Headers)
-            );
+            var response = httpContext.Response;
+
+            var result = new
+            {
+                ResponseHeader = response.Headers.ToDictionary(h => h.Key, h => h.Value.ToString()),
+                ResponseStatusCode = response.StatusCode,
+                ResponseContentType = response.ContentType,
+                ResponseContentLength = response.ContentLength
+            };
+
+            return result;
         }
     }
 }

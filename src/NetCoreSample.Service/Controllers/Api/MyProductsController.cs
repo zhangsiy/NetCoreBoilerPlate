@@ -3,11 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using NetCoreSample.Controllers.Api.Common;
-using NetCoreSample.Models.MyProduct;
-using NetCoreSample.Controllers.Api.Common.ResponseBuilder;
+using NetCoreSample.Service.Controllers.Api.Common;
+using NetCoreSample.Service.Models.MyProduct;
 
-namespace NetCoreSample.Controllers.Api
+namespace NetCoreSample.Service.Controllers.Api
 {
     /// <summary>
     /// Sample Controller for basic CRUD operations

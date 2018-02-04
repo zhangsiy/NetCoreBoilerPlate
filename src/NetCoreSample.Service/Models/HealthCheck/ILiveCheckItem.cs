@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 
-namespace NetCoreSample.Models.HealthCheck
+namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
     /// A common interface for all types of live check items
