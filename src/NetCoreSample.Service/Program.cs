@@ -3,6 +3,7 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Serilog;
+using Serilog.Events;
 
 namespace NetCoreSample.Service
 {
@@ -16,7 +17,7 @@ namespace NetCoreSample.Service
             .AddJsonFile("appsettings.json")
             .Build();
 
-            var logger = new LoggerConfiguration()
+            Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .CreateLogger();
 
