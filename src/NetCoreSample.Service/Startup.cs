@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using NetCoreSample.Filters;
 using NetCoreSample.Middlewares;
+using Serilog;
 using Swashbuckle.AspNetCore.Swagger;
 
 namespace NetCoreSample.Service
@@ -14,6 +15,12 @@ namespace NetCoreSample.Service
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
+
+            // Setup logging
+            // This uses Serilog
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(configuration)
+                .CreateLogger();
         }
 
         public IConfiguration Configuration { get; }
@@ -21,6 +28,10 @@ namespace NetCoreSample.Service
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            // Configure Serilog as the logging service
+            services.AddLogging(loggingBuilder =>
+                loggingBuilder.AddSerilog(dispose: true));
+
             services.AddMvc(options =>
             {
                 // Default profile to cache things for 1 hour
