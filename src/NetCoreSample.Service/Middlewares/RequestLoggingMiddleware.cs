@@ -3,7 +3,9 @@ using Serilog;
 using Serilog.Events;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 
 namespace NetCoreSample.Service.Middlewares
@@ -53,22 +55,24 @@ namespace NetCoreSample.Service.Middlewares
                 var statusCode = httpContext.Response?.StatusCode;
                 var level = statusCode >= 500 ? LogEventLevel.Error : LogEventLevel.Information;
 
-                var log = level >= LogEventLevel.Error ? GetLoggerWithVerboseRequestContext(httpContext) : Log;
+                var log = level >= LogEventLevel.Error ? await GetLoggerWithVerboseRequestContext(httpContext) : Log;
                 log.Write(level, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, statusCode, sw.Elapsed.TotalMilliseconds);
             }
-            // Never caught, because `LogException()` returns false.
-            catch (Exception ex) when (LogException(httpContext, sw, ex)) { }
+            catch (Exception ex) {
+                await LogException(httpContext, sw, ex);
+                throw;
+            }
         }
 
         /// <summary>
         /// Log an exception originated from handling the given web request context.
         /// </summary>
-        private static bool LogException(HttpContext httpContext, Stopwatch sw, Exception ex)
+        private async static Task<bool> LogException(HttpContext httpContext, Stopwatch sw, Exception ex)
         {
             sw.Stop();
 
-            GetLoggerWithVerboseRequestContext(httpContext)
-                .Error(ex, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, 500, sw.Elapsed.TotalMilliseconds);
+            var logger = await GetLoggerWithVerboseRequestContext(httpContext);
+            logger.Error(ex, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, 500, sw.Elapsed.TotalMilliseconds);
 
             return false;
         }
@@ -76,9 +80,9 @@ namespace NetCoreSample.Service.Middlewares
         /// <summary>
         /// Get a (Serilog) logger instance with verbose web request context data attached
         /// </summary>
-        private static ILogger GetLoggerWithVerboseRequestContext(HttpContext httpContext)
+        private async static Task<ILogger> GetLoggerWithVerboseRequestContext(HttpContext httpContext)
         {
-            var requestContext = GetRequestContext(httpContext);
+            var requestContext = await GetRequestContext(httpContext);
             return Log.ForContext("RequestContext", requestContext, true);
         }
 
@@ -86,9 +90,30 @@ namespace NetCoreSample.Service.Middlewares
         /// Construct a structure of data that represent verbose information
         /// from the request context.
         /// </summary>
-        private static dynamic GetRequestContext(HttpContext httpContext)
+        private async static Task<dynamic> GetRequestContext(HttpContext httpContext)
         {
             var request = httpContext.Request;
+
+            string requestBodyString = null;
+
+            if (request.Body != null)
+            {
+                var currentPosition = request.Body.Position;
+
+                request.Body.Seek(0, SeekOrigin.Begin);
+
+                // Hacky
+                // StreamReader takes over ownership of stream passed in.
+                // So if we wrap it in a "using" statement, it'll dispose
+                // the body stream here, which is not something we want 
+                // this piece of code to do.
+                // So leave the StreamReader below to garbage collector,
+                // and not invoke Dispose on it.
+                var bodyReader = new StreamReader(request.Body);
+
+                requestBodyString = await bodyReader.ReadToEndAsync();
+                request.Body.Seek(currentPosition, SeekOrigin.Begin);
+            }
 
             var result = new
             {
@@ -99,6 +124,7 @@ namespace NetCoreSample.Service.Middlewares
                 RequestContentType = request.ContentType,
                 RequestContentLength = request.ContentLength,
                 RequestQueryString = request.QueryString,
+                RequestBodyString = requestBodyString,
                 RequestForm = request.HasFormContentType 
                             ? request.Form.ToDictionary(v => v.Key, v => v.Value.ToString())
                             : null
