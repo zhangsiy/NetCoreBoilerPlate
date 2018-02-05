@@ -1,6 +1,6 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using NetCoreSample.Service.Models.HealthCheck;
 
 namespace NetCoreSample.Service.Controllers
 {
@@ -8,7 +8,7 @@ namespace NetCoreSample.Service.Controllers
     /// A end point to allow external pings to detect the up status of the service
     /// </summary>
     [Route("/[controller]")]
-    public class LiveCheckController : Controller
+    public class ExceptionController : Controller
     {
         /// <summary>
         /// Ping to get a live check response
@@ -17,10 +17,7 @@ namespace NetCoreSample.Service.Controllers
         [HttpGet]
         public async Task<object> Get()
         {
-            return await new LiveCheckBuilder()
-                .RegisterSelfCheck()
-                .Run();
+            throw new InvalidOperationException("This is an exception thrown for testing!");
         }
-
     }
 }

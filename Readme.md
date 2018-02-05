@@ -42,3 +42,8 @@
 ### Your First Docker 
 
 * gulp docker:push to compile, preflight the project and build and push the docker image to ECR
+
+
+## Nest Steps 
+
+* Implement/adopt a scaffolding/templating solution to assist the initialization of a project based on this boilerplate. 
