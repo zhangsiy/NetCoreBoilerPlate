@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using NetCoreSample.Service.Controllers.Api.Common;
@@ -55,6 +56,7 @@ namespace NetCoreSample.Service.Controllers.Api
         /// </summary>
         /// <returns>The list of entities</returns>
         [Route(""), HttpGet]
+        [ProducesResponseType(typeof(IEnumerable<MyProduct>), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetAll()
         {
             // Example of using the search request builder
@@ -67,6 +69,7 @@ namespace NetCoreSample.Service.Controllers.Api
         /// <param name="myProductId">The ID to find</param>
         /// <returns>The entity matches the given ID</returns>
         [Route("{myProductId}"), HttpGet]
+        [ProducesResponseType(typeof(MyProduct), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetById(string myProductId)
         {
             // Example of using the query builder
@@ -102,6 +105,7 @@ namespace NetCoreSample.Service.Controllers.Api
         /// </summary>
         /// <returns>The created entity</returns>
         [Route(""), HttpPost]
+        [ProducesResponseType(typeof(MyProduct), (int)HttpStatusCode.Created)]
         public async Task<IActionResult> Post([FromBody]MyProduct value)
         {
             // Sample simple sanity check
@@ -129,6 +133,7 @@ namespace NetCoreSample.Service.Controllers.Api
         /// </summary>
         /// <returns>The updated entity</returns>
         [Route(""), HttpPut]
+        [ProducesResponseType(typeof(MyProduct), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> Put([FromBody]MyProduct value)
         {
             // Sample validation on the model

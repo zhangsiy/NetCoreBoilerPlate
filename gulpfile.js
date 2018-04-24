@@ -32,6 +32,8 @@ const publishOutputDir = path.join(outputDir, 'publishOutput');
 const terraformExe = 'terraform' + (os.platform() === 'win32' ? '.exe': ''); //executables in windows have an extension, unix exe's do not follow the same convention.
 const terraformDir = path.join(__dirname, 'terraform');
 const terraformPath = path.join(terraformDir, terraformExe);
+const terraformSharedConfigDir = path.join(terraformDir, 'Shared');
+const terraformEnvironmentConfigDir = path.join(terraformDir, 'Environment');
 const terraformVersion = '0.9.3';
 
 //=============================USER CONFIGURATION, PLEASE FILL OUT ========================================================
@@ -179,9 +181,10 @@ gulp.task('terraform:download', ()=>{
 });
 
 /* terraform tasks */
-gulp.task('terraform:clean', ()=>del([path.join(terraformDir, '.terraform' )], {force: true}));
-gulp.task('terraform:init', ['terraform:clean', 'terraform:download'], (cb)=>{
-  exec(`${terraformPath} init -backend-config="bucket=${terraformStateS3Bucket}" -backend-config="key=${app}/${environment}/state.tf" -backend-config="region=${region}"`, {cwd:terraformDir})
+gulp.task('terraform:env:clean', ()=>del([path.join(terraformEnvironmentConfigDir, '.terraform' )], {force: true}));
+
+gulp.task('terraform:env:init', ['terraform:env:clean', 'terraform:download'], (cb)=>{
+  exec(`${terraformPath} init -backend-config="bucket=${terraformStateS3Bucket}" -backend-config="key=${app}/${environment}/state.tf" -backend-config="region=${region}"`, {cwd:terraformEnvironmentConfigDir})
   .then(a=>{
       console.log(a.stdout);
       console.log(a.stderr);
@@ -194,24 +197,57 @@ gulp.task('terraform:init', ['terraform:clean', 'terraform:download'], (cb)=>{
 }
 );
 
-gulp.task('terraform:destroy', ['terraform:init'], ()=>
+gulp.task('terraform:env:destroy', ['terraform:env:init'], ()=>
     spawn(terraformPath, ['destroy', '-force', 
-		'-var', `environment=${environment}`,
-    ], {stdio:'inherit', cwd:terraformDir})
+    '-var', `environment=${environment}`,
+    ], {stdio:'inherit', cwd:terraformEnvironmentConfigDir})
 );
 
-gulp.task('terraform:plan', ['terraform:init'], ()=>
-    spawn(terraformPath, ['get', '-update'], {stdio:'inherit', cwd:terraformDir})
+gulp.task('terraform:env:plan', ['terraform:env:init'], ()=>
+    spawn(terraformPath, ['get', '-update'], {stdio:'inherit', cwd:terraformEnvironmentConfigDir})
     .then(a=>spawn(terraformPath,  ['plan',
-		'-var', `environment=${environment}`,
-  ], {stdio:'inherit', cwd:terraformDir}))
+    '-var', `environment=${environment}`,
+  ], {stdio:'inherit', cwd:terraformEnvironmentConfigDir}))
     
 );
 
-gulp.task('terraform:apply',['terraform:plan', 'terraform:init'], () =>
+gulp.task('terraform:env:apply',['terraform:env:plan', 'terraform:env:init'], () =>
   spawn(terraformPath, ['apply', 
-	'-var', `environment=${environment}`,
-  ], {stdio:'inherit', cwd:terraformDir})
+  '-var', `environment=${environment}`,
+  ], {stdio:'inherit', cwd:terraformEnvironmentConfigDir})
+);
+
+gulp.task('terraform:shared:clean', ()=>del([path.join(terraformSharedConfigDir, '.terraform' )], {force: true}));
+
+gulp.task('terraform:shared:init', ['terraform:shared:clean', 'terraform:download'], (cb)=>{
+  exec(`${terraformPath} init -backend-config="bucket=${terraformStateS3Bucket}" -backend-config="key=${app}/Shared/state.tf" -backend-config="region=${region}"`, {cwd:terraformSharedConfigDir})
+  .then(a=>{
+      console.log(a.stdout);
+      console.log(a.stderr);
+      cb();
+  })
+  .catch(a=>{
+      console.log(a);
+      cb(a);
+    })
+}
+);
+
+gulp.task('terraform:shared:destroy', ['terraform:shared:init'], ()=>
+    spawn(terraformPath, ['destroy', '-force', 
+    ], {stdio:'inherit', cwd:terraformSharedConfigDir})
+);
+
+gulp.task('terraform:shared:plan', ['terraform:shared:init'], ()=>
+    spawn(terraformPath, ['get', '-update'], {stdio:'inherit', cwd:terraformSharedConfigDir})
+    .then(a=>spawn(terraformPath,  ['plan',
+  ], {stdio:'inherit', cwd:terraformSharedConfigDir}))
+    
+);
+
+gulp.task('terraform:shared:apply',['terraform:shared:plan', 'terraform:shared:init'], () =>
+  spawn(terraformPath, ['apply', 
+  ], {stdio:'inherit', cwd:terraformSharedConfigDir})
 );
 
 // ======================== 

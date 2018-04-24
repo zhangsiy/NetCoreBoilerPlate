@@ -11,7 +11,7 @@ namespace NetCoreSample.Service.Controllers
     public class ExceptionController : Controller
     {
         /// <summary>
-        /// Ping to get a live check response
+        /// Trigger a server side exception. (For Testing)
         /// </summary>
         /// <returns></returns>
         [HttpGet]
