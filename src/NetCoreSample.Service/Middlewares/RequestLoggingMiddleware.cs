@@ -58,7 +58,8 @@ namespace NetCoreSample.Service.Middlewares
                 var log = level >= LogEventLevel.Error ? await GetLoggerWithVerboseRequestContext(httpContext) : Log;
                 log.Write(level, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, statusCode, sw.Elapsed.TotalMilliseconds);
             }
-            catch (Exception ex) {
+            catch (Exception ex)
+            {
                 await LogException(httpContext, sw, ex);
                 throw;
             }
@@ -96,7 +97,7 @@ namespace NetCoreSample.Service.Middlewares
 
             string requestBodyString = null;
 
-            if (request.Body != null)
+            if (request.Body != null && request.Body.CanSeek)
             {
                 var currentPosition = request.Body.Position;
 
@@ -125,7 +126,7 @@ namespace NetCoreSample.Service.Middlewares
                 RequestContentLength = request.ContentLength,
                 RequestQueryString = request.QueryString,
                 RequestBodyString = requestBodyString,
-                RequestForm = request.HasFormContentType 
+                RequestForm = request.HasFormContentType
                             ? request.Form.ToDictionary(v => v.Key, v => v.Value.ToString())
                             : null
             };

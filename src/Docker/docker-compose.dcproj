@@ -5,7 +5,7 @@
     <DockerTargetOS>Linux</DockerTargetOS>
     <ProjectGuid>e07f757f-3391-4174-9076-1d741cebe361</ProjectGuid>
     <DockerLaunchBrowser>True</DockerLaunchBrowser>
-    <DockerServiceUrl>http://localhost:{ServicePort}/swagger</DockerServiceUrl>
+    <DockerServiceUrl>http://localhost:54419/swagger</DockerServiceUrl>
     <DockerServiceName>netcoresample.service</DockerServiceName>
   </PropertyGroup>
   <ItemGroup>
