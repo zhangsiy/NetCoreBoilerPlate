@@ -1,13 +1,13 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Net;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Cors;
 using Microsoft.AspNetCore.Mvc;
 using NetCoreSample.Service.Controllers.Api.Common;
-using NetCoreSample.Service.Models.MyProduct;
+using NetCoreSample.Service.Data.DeveloperSample;
+using NetCoreSample.Service.Models.DeveloperSample;
 
-namespace NetCoreSample.Service.Controllers.Api
+namespace NetCoreSample.Service.Controllers.Api.DeveloperSample
 {
     /// <summary>
     /// Sample Controller for basic CRUD operations
@@ -16,39 +16,11 @@ namespace NetCoreSample.Service.Controllers.Api
     [ResponseCache(CacheProfileName = "Default")]
     public class MyProductsController : ControllerBase
     {
-        private List<MyProduct> AllMyProducts { get; set; }
+        private IMyProductRepository MyProductRepository { get; }
 
-        /// <summary>
-        /// Constructor
-        /// </summary>
-        public MyProductsController()
+        public MyProductsController(IMyProductRepository myProductRepository)
         {
-            AllMyProducts = new List<MyProduct> {
-                new MyProduct
-                {
-                    MyProductId = "AAA-001",
-                    Name = "My Product 1",
-                    Description = "First test MyProduct",
-                    Created = new DateTime(2015, 10, 22, 10, 10, 10),
-                    Modified = new DateTime(2015, 10, 22, 10, 10, 10)
-                },
-                new MyProduct
-                {
-                    MyProductId = "AAA-002",
-                    Name = "My Product 2",
-                    Description = "Second test MyProduct",
-                    Created = new DateTime(2016, 2, 3, 4, 30, 30),
-                    Modified = new DateTime(2016, 3, 12, 7, 8, 9)
-                },
-                new MyProduct
-                {
-                    MyProductId = "AAA-003",
-                    Name = "My Product 3",
-                    Description = "Third test MyProduct",
-                    Created = new DateTime(2015, 03, 15, 15, 22, 11),
-                    Modified = new DateTime(2016, 05, 27, 19, 6, 3)
-                }
-            };
+            MyProductRepository = myProductRepository;
         }
 
         /// <summary>
@@ -60,7 +32,7 @@ namespace NetCoreSample.Service.Controllers.Api
         public async Task<IActionResult> GetAll()
         {
             // Example of using the search request builder
-            return Json(AllMyProducts);
+            return Json(await MyProductRepository.GetAllAsync());
         }
 
         /// <summary>
@@ -69,11 +41,12 @@ namespace NetCoreSample.Service.Controllers.Api
         /// <param name="myProductId">The ID to find</param>
         /// <returns>The entity matches the given ID</returns>
         [Route("{myProductId}"), HttpGet]
+        [EnableCors("ReadOnlyDefault")]
         [ProducesResponseType(typeof(MyProduct), (int)HttpStatusCode.OK)]
         public async Task<IActionResult> GetById(string myProductId)
         {
             // Example of using the query builder
-            var result = AllMyProducts.FirstOrDefault(p => p.MyProductId == myProductId);
+            var result = await MyProductRepository.GetAsync(myProductId);
 
             if (result == null)
             {
@@ -115,17 +88,10 @@ namespace NetCoreSample.Service.Controllers.Api
                 return BadRequest("MyProductId should not be provided for a POST!");
             }
 
-            // "Create" the new Entity
-            // Generate a GUID to serve as the object ID
-            var newId = Guid.NewGuid().ToString();
-            value.MyProductId = newId;
-            AllMyProducts.Add(value);
-
-            // Query the store for the "real" state of the entity
-            var createdValue = AllMyProducts.FirstOrDefault(p => p.MyProductId == newId);
+            var createdValue = await MyProductRepository.CreateAsync(value);
 
             // Construct the response
-            return Created(Url.Action("GetById", new {myProductId = newId}), createdValue);
+            return Created(Url.Action("GetById", new {myProductId = createdValue.MyProductId}), createdValue);
         }
 
         /// <summary>
@@ -144,7 +110,7 @@ namespace NetCoreSample.Service.Controllers.Api
             }
 
             // First try get the resource to update
-            var toUpdate = AllMyProducts.FirstOrDefault(p => p.MyProductId == value.MyProductId);
+            var toUpdate = await MyProductRepository.GetAsync(value.MyProductId);
             if (toUpdate == null)
             {
                 return NotFound();
@@ -167,19 +133,18 @@ namespace NetCoreSample.Service.Controllers.Api
                 return action;
             }
 
-            // Now update the resource (fake it here by removing and adding) 
-            AllMyProducts.Remove(toUpdate);
-            AllMyProducts.Add(value);
+            // Now update the resource
+            var updatedValue = await MyProductRepository.UpdateAsync(value);
 
             // Generate a etag for the new entity
             var eTag = new ETagBuilder()
-                .WithToken(value.MyProductId)
-                .WithToken(value.Name)
-                .WithToken(value.Description)
+                .WithToken(updatedValue.MyProductId)
+                .WithToken(updatedValue.Name)
+                .WithToken(updatedValue.Description)
                 .Build();
 
             // Construct the response as 200 OK (or 204 No Content), with right headers attached
-            return Json(value).WithETag(eTag).WithLastModified(value.Modified);
+            return Json(value).WithETag(eTag).WithLastModified(updatedValue.Modified);
         }
     }
 }

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.PlatformAbstractions;
 using NetCoreSample.Service.ActionFilters;
+using NetCoreSample.Service.Data.DeveloperSample;
 using NetCoreSample.Service.Middlewares;
 using Newtonsoft.Json.Converters;
 using Serilog;
@@ -121,6 +122,10 @@ namespace NetCoreSample.Service
             // AWS Service Clients
             services.AddAWSService<IAmazonS3>();
             services.AddAWSService<IAmazonDynamoDB>();
+
+            // Sample Developer Usage
+            // My Products
+            services.AddScoped<IMyProductRepository, MyProductRepository>();
         }
 
         private string GetXmlCommentsPath(ApplicationEnvironment appEnvironment)

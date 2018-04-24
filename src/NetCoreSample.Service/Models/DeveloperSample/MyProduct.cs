@@ -1,7 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 
-namespace NetCoreSample.Service.Models.MyProduct
+namespace NetCoreSample.Service.Models.DeveloperSample
 {
     public class MyProduct
     {
