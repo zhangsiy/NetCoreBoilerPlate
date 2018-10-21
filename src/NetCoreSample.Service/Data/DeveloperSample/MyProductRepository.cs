@@ -3,11 +3,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using NetCoreSample.Service.Common.Repository;
 using NetCoreSample.Service.Models.DeveloperSample;
 
 namespace NetCoreSample.Service.Data.DeveloperSample
 {
-    internal class MyProductRepository : HttpServiceRepositoryBase, IMyProductRepository
+    internal class MyProductRepository : WebServiceRepositoryBase, IMyProductRepository
     {
         private static List<MyProduct> AllMyProducts = new List<MyProduct>
         {
@@ -41,8 +42,6 @@ namespace NetCoreSample.Service.Data.DeveloperSample
             : base(httpClient)
         {
         }
-
-        protected override Uri BaseUri => new Uri(string.Empty);
 
         public async Task<MyProduct> CreateAsync(MyProduct objectToCreate)
         {
