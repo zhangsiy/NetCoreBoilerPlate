@@ -34,11 +34,11 @@ const terraformDir = path.join(__dirname, 'terraform');
 const terraformPath = path.join(terraformDir, terraformExe);
 const terraformSharedConfigDir = path.join(terraformDir, 'Shared');
 const terraformEnvironmentConfigDir = path.join(terraformDir, 'Environment');
-const terraformVersion = '0.9.3';
+const terraformVersion = '0.11.7';
 
 //=============================USER CONFIGURATION, PLEASE FILL OUT ========================================================
-//your aws region, default to us-east-1
-const region = argv.region || 'us-east-1';
+//your aws region, default to <TO_FILL | AWS_REGION>
+const region = argv.region || '<TO_FILL | AWS_REGION>';
 const app = 'NetCoreSample'; //your app's name, used to generate names for infrastructures
 
 const terraformStateS3Bucket = '<TO_FILL | DOMAIN_NAME>-terraform-bucket'; // the s3 bucket where we will store our terraform files
