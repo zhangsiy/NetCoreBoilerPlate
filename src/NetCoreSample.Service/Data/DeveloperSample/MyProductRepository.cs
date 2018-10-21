@@ -3,7 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Options;
+using NetCoreSample.Service.Common.AwsDynamoDB;
 using NetCoreSample.Service.Common.Repository;
+using NetCoreSample.Service.Configurations.DeveloperSample;
 using NetCoreSample.Service.Models.DeveloperSample;
 
 namespace NetCoreSample.Service.Data.DeveloperSample
@@ -38,9 +41,12 @@ namespace NetCoreSample.Service.Data.DeveloperSample
                 }
         };
 
-        public MyProductRepository(HttpClient httpClient)
+        private ServiceDependenciesConfig ServiceDependenciesConfig { get; set; }
+
+        public MyProductRepository(HttpClient httpClient, IOptions<ServiceDependenciesConfig> serviceDependenciesConfig)
             : base(httpClient)
         {
+            ServiceDependenciesConfig = serviceDependenciesConfig.Value;
         }
 
         public async Task<MyProduct> CreateAsync(MyProduct objectToCreate)

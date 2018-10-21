@@ -17,6 +17,7 @@ using NetCoreSample.Service.ActionFilters;
 using NetCoreSample.Service.Data.DeveloperSample;
 using NetCoreSample.Service.Middlewares;
 using System.Net.Http;
+using NetCoreSample.Service.Common.AwsDynamoDB;
 
 namespace NetCoreSample.Service
 {
@@ -137,7 +138,7 @@ namespace NetCoreSample.Service
             app.UseMvc();
         }
 
-        private static void ConfigureDependencyInjections(IServiceCollection services)
+        private void ConfigureDependencyInjections(IServiceCollection services)
         {
             // HttpClient as Singleton
             services.AddSingleton<HttpClient>();
@@ -146,8 +147,15 @@ namespace NetCoreSample.Service
             services.AddAWSService<IAmazonS3>();
             services.AddAWSService<IAmazonDynamoDB>();
 
+            // This is the custom client wrapper on top of DynamoDB API
+            // This is needed to add a layer of abstraction to facilitate better testability
+            services.AddSingleton<IDynamoDBClient, DynamoDBClient>();
+
             // Sample Developer Usage
             // My Products
+            // Also shown with example configuration injection
+            services.Configure<Configurations.DeveloperSample.ServiceDependenciesConfig>(
+                Configuration.GetSection("ServiceDependencies"));
             services.AddScoped<IMyProductRepository, MyProductRepository>();
         }
 
