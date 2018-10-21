@@ -33,8 +33,8 @@
 ### Infrastructure Setup
 
 * npm install
-* Deploy infrastructure via Terraform
-  * gulp terraform:apply
+* Deploy shared (aka: non-environment specific) infrastructure via Terraform
+  * gulp terraform:shared:apply
 * Go to AWS console, and copy the resultant ECR URI into the gulp file
   * Location is marked with "<TO_FILL | ECR_URI>"
 
