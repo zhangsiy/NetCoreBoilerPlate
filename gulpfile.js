@@ -102,6 +102,11 @@ gulp.task('publish', ['build'], () =>
 );
 
 gulp.task('run', [], () => {
+    // Setup the Net core environment variable so the proper
+    // configurations are pulled when start up
+    process.env.ASPNETCORE_ENVIRONMENT='Local';
+    process.env.ASPNETCORE_URLS='http://0.0.0.0:54419';
+    
 		if (argv.rebuild) {
 			gulp.start('publish', () => {
 					process.chdir(`${publishOutputDir}`);
