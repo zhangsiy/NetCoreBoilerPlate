@@ -1,19 +1,23 @@
-﻿using Amazon.DynamoDBv2;
-using Amazon.S3;
+﻿using System;
+using System.IO;
+using System.Reflection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.PlatformAbstractions;
+using Serilog;
+using Swashbuckle.AspNetCore.Swagger;
+using Amazon.DynamoDBv2;
+using Amazon.S3;
+using Newtonsoft.Json.Converters;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using NetCoreSample.Service.ActionFilters;
 using NetCoreSample.Service.Data.DeveloperSample;
 using NetCoreSample.Service.Middlewares;
-using Newtonsoft.Json.Converters;
-using Serilog;
-using Swashbuckle.AspNetCore.Swagger;
-using System.IO;
 using System.Net.Http;
+using NetCoreSample.Service.Common.AwsDynamoDB;
 
 namespace NetCoreSample.Service
 {
@@ -28,6 +32,16 @@ namespace NetCoreSample.Service
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .CreateLogger();
+
+            // Setup Json serialization preferences globally
+            JsonConvert.DefaultSettings =
+                () => new JsonSerializerSettings
+                {
+                    Converters = {
+                        new StringEnumConverter { CamelCaseText = true }
+                    },
+                    ContractResolver = new CamelCasePropertyNamesContractResolver()
+                };
         }
 
         public IConfiguration Configuration { get; }
@@ -39,41 +53,42 @@ namespace NetCoreSample.Service
             services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
 
-            services.AddMvc(options =>
-            {
-                // Register action filter to automatic return 400 when model
-                // validation fails (this is applied to all actions in all
-                // controllers)
-                options.Filters.Add(typeof(ValidateModelStateAttribute));
-
-                // Default profile to cache things for 1 hour
-                options.CacheProfiles.Add("Default",
-                    new CacheProfile()
-                    {
-                        Duration = 3600,
-                        Location = ResponseCacheLocation.Any
-                    });
-
-                // Use this profile to get "no-cache" behavior
-                options.CacheProfiles.Add("Never",
-                    new CacheProfile()
-                    {
-                        Location = ResponseCacheLocation.None,
-                        NoStore = true
-                    });
-            })
-            .AddJsonOptions(options =>
-            {
-                options.SerializerSettings.Converters.Add(new StringEnumConverter
+            services.AddMvc()
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .AddMvcOptions(options =>
                 {
-                    CamelCaseText = true
+                    // Register action filter to automatic return 400 when model
+                    // validation fails (this is applied to all actions in all
+                    // controllers)
+                    options.Filters.Add(typeof(ValidateModelStateAttribute));
+
+                    // Default profile to cache things for 1 hour
+                    options.CacheProfiles.Add("PublicOneHour",
+                        new CacheProfile()
+                        {
+                            Duration = 3600,
+                            Location = ResponseCacheLocation.Any
+                        });
+
+                    // Use this profile to get "no-cache" behavior
+                    options.CacheProfiles.Add("Never",
+                        new CacheProfile()
+                        {
+                            Location = ResponseCacheLocation.None,
+                            NoStore = true
+                        });
+                })
+                .AddJsonOptions(options =>
+                {
+                    options.SerializerSettings.Converters.Add(new StringEnumConverter
+                    {
+                        CamelCaseText = true
+                    });
                 });
-            });
 
             // Configure CORS Policies
             services.AddCors(options =>
             {
-                // Visualizer End point CORS Policy
                 options.AddPolicy("ReadOnlyDefault",
                     builder => builder
                         .WithMethods("GET", "HEAD", "OPTIONS")
@@ -85,7 +100,16 @@ namespace NetCoreSample.Service
             {
                 c.CustomSchemaIds(type => type.FullName);
                 c.SwaggerDoc("v1", new Info { Title = "NetCoreSample API", Version = "v1" });
-                c.IncludeXmlComments(GetXmlCommentsPath(PlatformServices.Default.Application));
+
+                // Try include documentation file, if found
+                string docFile = GetXmlCommentsPath();
+                if (File.Exists(docFile))
+                {
+                    c.IncludeXmlComments(docFile);
+                }
+
+                // Enable annotations, such as tags
+                c.EnableAnnotations();
             });
 
             // Configure the dependency injection structure
@@ -99,7 +123,7 @@ namespace NetCoreSample.Service
             app.UseCorrelationId();
             app.UseRequestLogger();
 
-            if (env.IsDevelopment())
+            if (env.IsEnvironment("Local"))
             {
                 app.UseDeveloperExceptionPage();
             }
@@ -114,7 +138,7 @@ namespace NetCoreSample.Service
             app.UseMvc();
         }
 
-        private static void ConfigureDependencyInjections(IServiceCollection services)
+        private void ConfigureDependencyInjections(IServiceCollection services)
         {
             // HttpClient as Singleton
             services.AddSingleton<HttpClient>();
@@ -123,14 +147,21 @@ namespace NetCoreSample.Service
             services.AddAWSService<IAmazonS3>();
             services.AddAWSService<IAmazonDynamoDB>();
 
+            // This is the custom client wrapper on top of DynamoDB API
+            // This is needed to add a layer of abstraction to facilitate better testability
+            services.AddSingleton<IDynamoDBClient, DynamoDBClient>();
+
             // Sample Developer Usage
             // My Products
+            // Also shown with example configuration injection
+            services.Configure<Configurations.DeveloperSample.ServiceDependenciesConfig>(
+                Configuration.GetSection("ServiceDependencies"));
             services.AddScoped<IMyProductRepository, MyProductRepository>();
         }
 
-        private string GetXmlCommentsPath(ApplicationEnvironment appEnvironment)
+        private string GetXmlCommentsPath()
         {
-            return Path.Combine(appEnvironment.ApplicationBasePath, $"{appEnvironment.ApplicationName}.xml");
+            return Path.Combine(AppContext.BaseDirectory, $"{Assembly.GetExecutingAssembly().GetName().Name}.xml");
         }
     }
 }

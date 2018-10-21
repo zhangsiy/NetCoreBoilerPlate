@@ -40,14 +40,6 @@ namespace NetCoreSample.Service.Controllers.Api
         }
 
         /// <summary>
-        /// Constructs a 409 Conflict response
-        /// </summary>
-        protected ConflictResult Conflict(object conflictDescription)
-        {
-            return new ConflictResult(conflictDescription);
-        }
-
-        /// <summary>
         /// Constructs a 412 Precondition Failed response
         /// </summary>
         protected PreconditionFailedResult PreconditionFailed()

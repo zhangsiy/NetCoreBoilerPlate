@@ -7,12 +7,17 @@ namespace NetCoreSample.Service
 {
     public class Program
     {
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
         public static int Main(string[] args)
         {
             try
             {
                 Log.Information("Starting web host");
-                BuildWebHost(args).Run();
+                CreateWebHostBuilder(args).Build().Run();
                 return 0;
             }
             catch (Exception ex)
@@ -26,9 +31,13 @@ namespace NetCoreSample.Service
             }
         }
 
-        public static IWebHost BuildWebHost(string[] args) =>
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="args"></param>
+        /// <returns></returns>
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseStartup<Startup>()
-                .Build();
+                .UseStartup<Startup>();
     }
 }

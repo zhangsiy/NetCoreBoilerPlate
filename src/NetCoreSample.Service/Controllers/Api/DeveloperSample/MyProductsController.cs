@@ -13,7 +13,7 @@ namespace NetCoreSample.Service.Controllers.Api.DeveloperSample
     /// Sample Controller for basic CRUD operations
     /// </summary>
     [Route("api/v1/[controller]")]
-    [ResponseCache(CacheProfileName = "Default")]
+    [ResponseCache(CacheProfileName = "PublicOneHour")]
     public class MyProductsController : ControllerBase
     {
         private IMyProductRepository MyProductRepository { get; }
