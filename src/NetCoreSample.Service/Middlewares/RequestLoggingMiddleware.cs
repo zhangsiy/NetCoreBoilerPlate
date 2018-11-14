@@ -25,23 +25,30 @@ namespace NetCoreSample.Service.Middlewares
         /// Default request logging message template
         /// </summary>
         const string MessageTemplate =
-            "HTTP {RequestMethod} {RequestPath} responded {StatusCode} in {Elapsed:0.0000} ms";
+            "HTTP {RequestMethod} {RequestPath} {QueryString} responded {StatusCode} in {Elapsed:0.0000} ms";
 
-        static readonly ILogger Log = Serilog.Log.ForContext<RequestLoggingMiddleware>();
+        static readonly ILogger Logger = Serilog.Log.ForContext<RequestLoggingMiddleware>();
 
         readonly RequestDelegate _next;
 
         public RequestLoggingMiddleware(RequestDelegate next)
         {
-            if (next == null) throw new ArgumentNullException(nameof(next));
+            if (next == null)
+            {
+                throw new ArgumentNullException(nameof(next));
+            }
+
             _next = next;
         }
 
         public async Task Invoke(HttpContext httpContext)
         {
-            if (httpContext == null) throw new ArgumentNullException(nameof(httpContext));
+            if (httpContext == null)
+            {
+                throw new ArgumentNullException(nameof(httpContext));
+            }
 
-            var sw = Stopwatch.StartNew();
+            Stopwatch sw = Stopwatch.StartNew();
             try
             {
                 await _next.Invoke(httpContext);
@@ -52,11 +59,12 @@ namespace NetCoreSample.Service.Middlewares
                 // Implementers should decide whether this behavior should be changed based on
                 // specific use cases. 
                 // E.g. whether 4XX should log verbose context as well. 
-                var statusCode = httpContext.Response?.StatusCode;
-                var level = statusCode >= 500 ? LogEventLevel.Error : LogEventLevel.Information;
+                int? statusCode = httpContext.Response?.StatusCode;
+                LogEventLevel level = statusCode >= 500 ? LogEventLevel.Error : LogEventLevel.Information;
 
-                var log = level >= LogEventLevel.Error ? await GetLoggerWithVerboseRequestContext(httpContext) : Log;
-                log.Write(level, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, statusCode, sw.Elapsed.TotalMilliseconds);
+                ILogger logger = level >= LogEventLevel.Error ? await GetLoggerWithVerboseRequestContext(httpContext) : Logger;
+                logger.Write(level, MessageTemplate, 
+                    httpContext.Request.Method, httpContext.Request.Path, httpContext.Request.QueryString.ToString(), statusCode, sw.Elapsed.TotalMilliseconds);
             }
             catch (Exception ex)
             {
@@ -72,8 +80,9 @@ namespace NetCoreSample.Service.Middlewares
         {
             sw.Stop();
 
-            var logger = await GetLoggerWithVerboseRequestContext(httpContext);
-            logger.Error(ex, MessageTemplate, httpContext.Request.Method, httpContext.Request.Path, 500, sw.Elapsed.TotalMilliseconds);
+            ILogger logger = await GetLoggerWithVerboseRequestContext(httpContext);
+            logger.Error(ex, MessageTemplate, 
+                httpContext.Request.Method, httpContext.Request.Path, httpContext.Request.QueryString.ToString(), 500, sw.Elapsed.TotalMilliseconds);
 
             return false;
         }
@@ -83,7 +92,7 @@ namespace NetCoreSample.Service.Middlewares
         /// </summary>
         private async static Task<ILogger> GetLoggerWithVerboseRequestContext(HttpContext httpContext)
         {
-            var requestContext = await GetRequestContext(httpContext);
+            dynamic requestContext = await GetRequestContext(httpContext);
             return Log.ForContext("RequestContext", requestContext, true);
         }
 
@@ -93,13 +102,13 @@ namespace NetCoreSample.Service.Middlewares
         /// </summary>
         private async static Task<dynamic> GetRequestContext(HttpContext httpContext)
         {
-            var request = httpContext.Request;
+            HttpRequest request = httpContext.Request;
 
             string requestBodyString = null;
 
             if (request.Body != null && request.Body.CanSeek)
             {
-                var currentPosition = request.Body.Position;
+                long currentPosition = request.Body.Position;
 
                 request.Body.Seek(0, SeekOrigin.Begin);
 
@@ -140,7 +149,7 @@ namespace NetCoreSample.Service.Middlewares
         /// </summary>
         private static dynamic GetResponseContext(HttpContext httpContext)
         {
-            var response = httpContext.Response;
+            HttpResponse response = httpContext.Response;
 
             var result = new
             {

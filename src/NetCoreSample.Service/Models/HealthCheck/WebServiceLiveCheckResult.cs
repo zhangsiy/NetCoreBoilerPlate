@@ -3,7 +3,7 @@
 namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
-    /// DTO to hold check result of (external) web service
+    /// Model to hold check result of (external) web service
     /// </summary>
     public class WebServiceLiveCheckResult
     {

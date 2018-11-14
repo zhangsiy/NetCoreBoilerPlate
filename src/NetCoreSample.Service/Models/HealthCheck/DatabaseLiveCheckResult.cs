@@ -1,7 +1,7 @@
 ﻿namespace NetCoreSample.Service.Models.HealthCheck
 {
     /// <summary>
-    /// DTO to hold Database live check result
+    /// Model to hold Database live check result
     /// </summary>
     public class DatabaseLiveCheckResult
     {
