@@ -25,7 +25,7 @@ namespace NetCoreSample.Service.Controllers.Api.Common.Responses
         }
 
         /// <summary>
-        /// Attach ETag header to the response
+        /// Attach LastModified header to the response
         /// </summary>
         public static void PutLastModified(this ActionContext context, DateTime? lastModified)
         {
@@ -33,7 +33,7 @@ namespace NetCoreSample.Service.Controllers.Api.Common.Responses
             {
                 if (lastModified != null)
                 {
-                    context.HttpContext.Response.Headers.Add(HeaderNames.LastModified, lastModified.Value.ToUniversalTime().ToString("O"));
+                    context.HttpContext.Response.Headers.Add(HeaderNames.LastModified, lastModified.Value.ToUniversalTime().ToString("R"));
                 }
             }
         }
