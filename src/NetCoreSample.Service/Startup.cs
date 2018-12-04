@@ -18,6 +18,8 @@ using NetCoreSample.Service.Data.DeveloperSample;
 using NetCoreSample.Service.Middlewares;
 using System.Net.Http;
 using NetCoreSample.Service.Common.AwsDynamoDB;
+using W4k.AspNetCore.Correlator.Extensions;
+using W4k.AspNetCore.Correlator;
 
 namespace NetCoreSample.Service
 {
@@ -52,6 +54,9 @@ namespace NetCoreSample.Service
             // Configure Serilog as the logging service
             services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
+
+            // Add Correlation ID
+            services.AddCorrelator();
 
             services.AddMvc()
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
@@ -119,8 +124,10 @@ namespace NetCoreSample.Service
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
+            // Register Correlation ID hanlding
+            app.UseCorrelator();
+
             // Register custom middlewars
-            app.UseCorrelationId();
             app.UseRequestLogger();
 
             if (env.IsEnvironment("Local"))
@@ -140,9 +147,6 @@ namespace NetCoreSample.Service
 
         private void ConfigureDependencyInjections(IServiceCollection services)
         {
-            // HttpClient as Singleton
-            services.AddSingleton<HttpClient>();
-
             // AWS Service Clients
             services.AddAWSService<IAmazonS3>();
             services.AddAWSService<IAmazonDynamoDB>();
@@ -156,7 +160,13 @@ namespace NetCoreSample.Service
             // Also shown with example configuration injection
             services.Configure<Configurations.DeveloperSample.ServiceDependenciesConfig>(
                 Configuration.GetSection("ServiceDependencies"));
-            services.AddScoped<IMyProductRepository, MyProductRepository>();
+
+            // Inject HttpClient, via HttpClientFactory, and also attach the correlation forwarding behavior
+            services.AddHttpClient<IMyProductRepository, MyProductRepository>(config =>
+            {
+                // HTTP client configuration
+            })
+            .AddHttpMessageHandler<CorrelatorHttpMessageHandler>();
         }
 
         private string GetXmlCommentsPath()
