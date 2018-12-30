@@ -62,6 +62,8 @@ namespace NetCoreSample.Service
                 .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
                 .AddMvcOptions(options =>
                 {
+                    options.Filters.Add(typeof(ActionLoggingContextFilter));
+
                     // Register action filter to automatic return 400 when model
                     // validation fails (this is applied to all actions in all
                     // controllers)

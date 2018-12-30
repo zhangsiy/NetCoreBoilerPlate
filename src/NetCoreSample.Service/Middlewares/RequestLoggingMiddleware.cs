@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Http;
+using NetCoreSample.Service.Common;
 using Serilog;
 using Serilog.Events;
 using System;
@@ -25,7 +26,7 @@ namespace NetCoreSample.Service.Middlewares
         /// Default request logging message template
         /// </summary>
         const string MessageTemplate =
-            "HTTP {RequestMethod} {RequestPath} {QueryString} responded {StatusCode} in {Elapsed:0.0000} ms";
+            "Action={ActionPath} Request=[HTTP {RequestMethod} {RequestPath} {QueryString} responded {StatusCode} in {Elapsed:0.0000} ms]";
 
         static readonly ILogger Logger = Serilog.Log.ForContext<RequestLoggingMiddleware>();
 
@@ -63,7 +64,8 @@ namespace NetCoreSample.Service.Middlewares
                 LogEventLevel level = statusCode >= 500 ? LogEventLevel.Error : LogEventLevel.Information;
 
                 ILogger logger = level >= LogEventLevel.Error ? await GetLoggerWithVerboseRequestContext(httpContext) : Logger;
-                logger.Write(level, MessageTemplate, 
+                logger.Write(level, MessageTemplate,
+                    httpContext.GetActionPath(),
                     httpContext.Request.Method, httpContext.Request.Path, httpContext.Request.QueryString.ToString(), statusCode, sw.Elapsed.TotalMilliseconds);
             }
             catch (Exception ex)
@@ -81,7 +83,8 @@ namespace NetCoreSample.Service.Middlewares
             sw.Stop();
 
             ILogger logger = await GetLoggerWithVerboseRequestContext(httpContext);
-            logger.Error(ex, MessageTemplate, 
+            logger.Error(ex, MessageTemplate,
+                httpContext.GetActionPath(),
                 httpContext.Request.Method, httpContext.Request.Path, httpContext.Request.QueryString.ToString(), 500, sw.Elapsed.TotalMilliseconds);
 
             return false;
