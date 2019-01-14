@@ -8,25 +8,20 @@ using System.Threading.Tasks;
 namespace NetCoreSample.Service.Common.Repository
 {
     /// <summary>
-    /// Wraps HttpClient to provide deserialization and response status code check
-    /// (and, in the future, other common concerns like authentication and correlation id handling)
+    /// Wraps HttpClient to provide deserialization, response status code check, and correlation id handling
     /// </summary>
     public class WebServiceRepositoryBase
     {
-        /// <summary>
-        /// 
-        /// </summary>
-        protected readonly HttpClient HttpClient;
+        private readonly HttpClient _httpClient;
 
         /// <summary>
         /// 
         /// </summary>
         /// <param name="httpClient"></param>
+        /// <param name="correlationIdProvider"></param>
         public WebServiceRepositoryBase(HttpClient httpClient)
         {
-            HttpClient = httpClient;
-
-            AddDefaultRequestHeaders(HttpClient.DefaultRequestHeaders);
+            _httpClient = httpClient;
         }
 
         /// <summary>
@@ -146,8 +141,8 @@ namespace NetCoreSample.Service.Common.Repository
         /// <returns></returns>
         protected async Task<T> SendRequestAsync<T>(HttpRequestMessage httpRequestMessage)
         {
-            HttpResponseMessage response = await HttpClient.SendAsync(httpRequestMessage);
-            response.EnsureSuccessStatusCode();
+            HttpResponseMessage response = await _httpClient.SendAsync(httpRequestMessage);
+            EnsureSuccessStatusCode(response);
             return await response.Content.ReadAsAsync<T>();
         }
 
@@ -162,7 +157,7 @@ namespace NetCoreSample.Service.Common.Repository
         {
             var request = new HttpRequestMessage
             {
-                RequestUri = new Uri(HttpClient.BaseAddress, path),
+                RequestUri = new Uri(_httpClient.BaseAddress, path),
                 Method = method
             };
 
@@ -176,9 +171,21 @@ namespace NetCoreSample.Service.Common.Repository
             return request;
         }
 
-        private static void AddDefaultRequestHeaders(HttpRequestHeaders headers)
+        private void AddDefaultRequestHeaders(HttpRequestHeaders headers)
         {
             headers.Add("Accept", "application/json");
+        }
+
+        private void EnsureSuccessStatusCode(HttpResponseMessage response)
+        {
+            try
+            {
+                response.EnsureSuccessStatusCode();
+            }
+            catch (HttpRequestException exception)
+            {
+                throw new VerboseHttpRequestException(response.StatusCode, exception.Message);
+            }
         }
     }
 }
