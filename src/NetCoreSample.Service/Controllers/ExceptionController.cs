@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace NetCoreSample.Service.Controllers
 {
     /// <summary>
-    /// A end point to allow external pings to detect the up status of the service
+    /// An endpoint to trigger a server side exception, for testing
     /// </summary>
     [Route("/[controller]")]
     public class ExceptionController : Controller
