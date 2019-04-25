@@ -59,7 +59,7 @@ namespace NetCoreSample.Service
             services.AddCorrelator();
 
             services.AddMvc()
-                .SetCompatibilityVersion(CompatibilityVersion.Version_2_1)
+                .SetCompatibilityVersion(CompatibilityVersion.Version_2_2)
                 .AddMvcOptions(options =>
                 {
                     options.Filters.Add(typeof(ActionLoggingContextFilter));
