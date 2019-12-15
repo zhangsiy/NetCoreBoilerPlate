@@ -1,8 +1,0 @@
-version: '3.4'
-
-services:
-  netcoresample.service:
-    image: netcoresample.service
-    build:
-      context: ../
-      dockerfile: NetCoreSample.Service/Dockerfile

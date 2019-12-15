@@ -2,12 +2,13 @@ provider "aws" {
   alias = "<TO_FILL | AWS_REGION>"
 
   region = "<TO_FILL | AWS_REGION>"
-  profile = "<TO_FILL | DOMAIN_NAME>-terraform"
+  profile = "<TO_FILL | DOMAIN_TERRAFORM_USER>"
 }
 
+# store remote terraform state in S3
 terraform {
   backend "s3" {
-    profile = "<TO_FILL | DOMAIN_NAME>-terraform"
+    profile = "<TO_FILL | DOMAIN_TERRAFORM_USER>"
   }
 }
 

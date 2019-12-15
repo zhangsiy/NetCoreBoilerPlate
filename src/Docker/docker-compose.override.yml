@@ -1,8 +1,0 @@
-version: '3.4'
-
-services:
-  netcoresample.service:
-    environment:
-      - ASPNETCORE_ENVIRONMENT=Local
-    ports:
-      - "80"

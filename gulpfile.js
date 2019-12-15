@@ -24,7 +24,7 @@ const environment = branch.replace('/', '-').replace('\\', '-').replace('origin-
 // Dotnet context
 const configuration = 'Release';
 const version = '1.0.0';
-const sourceDir = path.join(process.cwd(), 'src');
+const sourceDir = path.join(process.cwd());
 const outputDir = path.join(process.cwd(), 'output');
 const publishOutputDir = path.join(outputDir, 'publishOutput');
 
@@ -41,10 +41,10 @@ const terraformVersion = '0.11.7';
 const region = argv.region || '<TO_FILL | AWS_REGION>';
 const app = 'NetCoreSample'; //your app's name, used to generate names for infrastructures
 
-const terraformStateS3Bucket = '<TO_FILL | DOMAIN_NAME>-terraform-bucket'; // the s3 bucket where we will store our terraform files
-const terraformAwsProfile = '<TO_FILL | DOMAIN_NAME>-terraform';
+const terraformStateS3Bucket = '<TO_FILL | DOMAIN_TERRAFORM_STATES_BUCKET>'; // the s3 bucket where we will store our terraform files
+const terraformAwsProfile = '<TO_FILL | DOMAIN_TERRAFORM_USER>';
 
-const mainProjectName = 'NetCoreSample.Service'; // The name of the main/entry project.
+const mainProjectName = 'NetCoreSample'; // The name of the main/entry project.
 
 const containerRegistryUri = "<TO_FILL | ECR_URI>"; // URI to locate the container image registry
 //=============================END USER CONFIGURATION ====================================================================
@@ -52,8 +52,7 @@ const containerRegistryUri = "<TO_FILL | ECR_URI>"; // URI to locate the contain
 // Docker context
 const dockerEnvironment = argv.dockerenv || environment;
 const dockerTag = argv.dockertag || `${dockerEnvironment}-${version}`;
-const dockerDir = path.join(sourceDir, 'Docker');
-const dockerFilePath = path.join(sourceDir, mainProjectName, 'Dockerfile');
+const dockerFilePath = path.join(__dirname, 'Dockerfile');
 
 const entryAssemblyName = `${mainProjectName}.dll`;
 const dockerImageTag = `${containerRegistryUri}:${dockerTag}`;
@@ -202,23 +201,17 @@ gulp.task('terraform:env:init', ['terraform:env:clean', 'terraform:download'], (
 }
 );
 
-gulp.task('terraform:env:destroy', ['terraform:env:init'], ()=>
-    spawn(terraformPath, ['destroy', '-force', 
-    '-var', `environment=${environment}`,
-    ], {stdio:'inherit', cwd:terraformEnvironmentConfigDir})
-);
-
 gulp.task('terraform:env:plan', ['terraform:env:init'], ()=>
     spawn(terraformPath, ['get', '-update'], {stdio:'inherit', cwd:terraformEnvironmentConfigDir})
     .then(a=>spawn(terraformPath,  ['plan',
-    '-var', `environment=${environment}`,
+    '-var', `environment=${environment}`, '-var', `image_uri=${dockerImageTag}`
   ], {stdio:'inherit', cwd:terraformEnvironmentConfigDir}))
     
 );
 
 gulp.task('terraform:env:apply',['terraform:env:plan', 'terraform:env:init'], () =>
   spawn(terraformPath, ['apply', 
-  '-var', `environment=${environment}`,
+  '-var', `environment=${environment}`, '-var', `image_uri=${dockerImageTag}`
   ], {stdio:'inherit', cwd:terraformEnvironmentConfigDir})
 );
 
@@ -236,11 +229,6 @@ gulp.task('terraform:shared:init', ['terraform:shared:clean', 'terraform:downloa
       cb(a);
     })
 }
-);
-
-gulp.task('terraform:shared:destroy', ['terraform:shared:init'], ()=>
-    spawn(terraformPath, ['destroy', '-force', 
-    ], {stdio:'inherit', cwd:terraformSharedConfigDir})
 );
 
 gulp.task('terraform:shared:plan', ['terraform:shared:init'], ()=>
